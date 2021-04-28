@@ -1,6 +1,5 @@
 package osm.dao;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -13,6 +12,16 @@ import osm.model.TagDb;
 import static osm.DbUtils.getConnection;
 
 public class TagDaoImpl implements TagDao {
+
+    public TagDaoImpl() throws SQLException {
+        EMPTY_STATEMENT = getConnection().createStatement();
+        GET_STATEMENT = getConnection().prepareStatement(SqlConstants.SQL_GET);
+        INSERT_STATEMENT = getConnection().prepareStatement(SqlConstants.SQL_INSERT);
+    }
+
+    private final PreparedStatement GET_STATEMENT;
+    private final PreparedStatement INSERT_STATEMENT;
+    private final Statement EMPTY_STATEMENT;
 
     private static void prepareStatement(PreparedStatement statement, TagDb tag) throws SQLException {
         statement.setLong(1, tag.getNodeId());
@@ -27,10 +36,10 @@ public class TagDaoImpl implements TagDao {
 
     @Override
     public List<TagDb> getTags(long nodeId) throws SQLException {
-        Connection connection = getConnection();
-        PreparedStatement statement = connection.prepareStatement(SqlConstants.SQL_GET);
-        statement.setLong(1, nodeId);
-        ResultSet resultSet = statement.executeQuery(SqlConstants.SQL_GET);
+        //Connection connection = getConnection();
+        //PreparedStatement statement = connection.prepareStatement(SqlConstants.SQL_GET);
+        GET_STATEMENT.setLong(1, nodeId);
+        ResultSet resultSet = GET_STATEMENT.executeQuery(SqlConstants.SQL_GET);
         List<TagDb> tags = new ArrayList<>();
         while (resultSet.next()) {
             tags.add(mapTag(resultSet));
@@ -40,31 +49,31 @@ public class TagDaoImpl implements TagDao {
 
     @Override
     public void insertTag(TagDb tag) throws SQLException {
-        Connection connection = getConnection();
-        Statement statement = connection.createStatement();
+        //Connection connection = getConnection();
+        //Statement statement = connection.createStatement();
         String sql = "insert into tags(node_id, key, value) " +
                 "values (" + tag.getNodeId() + ", '" + tag.getKey().replace("'", "''") +
                 "', '" + tag.getValue().replace("'", "''") + "')";
-        statement.execute(sql);
+        EMPTY_STATEMENT.execute(sql);
     }
 
     @Override
     public void insertPreparedTag(TagDb tag) throws SQLException {
-        Connection connection = getConnection();
-        PreparedStatement statement = connection.prepareStatement(TagDaoImpl.SqlConstants.SQL_INSERT);
-        prepareStatement(statement, tag);
-        statement.execute();
+        //Connection connection = getConnection();
+        //PreparedStatement statement = connection.prepareStatement(TagDaoImpl.SqlConstants.SQL_INSERT);
+        prepareStatement(INSERT_STATEMENT, tag);
+        INSERT_STATEMENT.execute();
     }
 
     @Override
     public void batchInsertTags(List<TagDb> tags) throws SQLException {
-        Connection connection = getConnection();
-        PreparedStatement statement = connection.prepareStatement(TagDaoImpl.SqlConstants.SQL_INSERT);
+        //Connection connection = getConnection();
+        //PreparedStatement statement = connection.prepareStatement(TagDaoImpl.SqlConstants.SQL_INSERT);
         for (TagDb tag : tags) {
-            prepareStatement(statement, tag);
-            statement.addBatch();
+            prepareStatement(INSERT_STATEMENT, tag);
+            INSERT_STATEMENT.addBatch();
         }
-        statement.executeBatch();
+        INSERT_STATEMENT.executeBatch();
     }
 
     private static class SqlConstants {

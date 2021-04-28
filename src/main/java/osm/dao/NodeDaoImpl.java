@@ -13,6 +13,16 @@ import static osm.DbUtils.getConnection;
 
 public class NodeDaoImpl implements NodeDao {
 
+    public NodeDaoImpl() throws SQLException {
+        EMPTY_STATEMENT = getConnection().createStatement();
+        GET_STATEMENT = getConnection().prepareStatement(SqlConstants.SQL_GET);
+        INSERT_STATEMENT = getConnection().prepareStatement(SqlConstants.SQL_INSERT);
+    }
+
+    private final PreparedStatement GET_STATEMENT;
+    private final PreparedStatement INSERT_STATEMENT;
+    private final Statement EMPTY_STATEMENT;
+
     private static void prepareStatement(PreparedStatement statement, NodeDb node) throws SQLException {
         statement.setLong(1, node.getId());
         statement.setString(2, node.getUser());
@@ -27,40 +37,40 @@ public class NodeDaoImpl implements NodeDao {
 
     @Override
     public NodeDb getNode(long nodeId) throws SQLException {
-        Connection connection = getConnection();
-        PreparedStatement statement = connection.prepareStatement(SqlConstants.SQL_GET);
-        statement.setLong(1, nodeId);
-        ResultSet resultSet = statement.executeQuery(SqlConstants.SQL_GET);
+        //Connection connection = getConnection();
+        //PreparedStatement statement = connection.prepareStatement(SqlConstants.SQL_GET);
+        GET_STATEMENT.setLong(1, nodeId);
+        ResultSet resultSet = GET_STATEMENT.executeQuery(SqlConstants.SQL_GET);
         return resultSet.next() ? mapNode(resultSet) : null;
     }
 
     @Override
     public void insertNode(NodeDb node) throws SQLException {
-        Connection connection = getConnection();
-        Statement statement = connection.createStatement();
+        //Connection connection = getConnection();
+        //Statement statement = connection.createStatement();
         String sql = "insert into nodes(id, username, longitude, latitude) " +
                 "values (" + node.getId() + ", '" + node.getUser().replace("'", "''") +
                 "', " + node.getLongitude() + ", " + node.getLatitude() + ");";
-        statement.execute(sql);
+        EMPTY_STATEMENT.execute(sql);
     }
 
     @Override
     public void insertPreparedNode(NodeDb node) throws SQLException {
-        Connection connection = getConnection();
-        PreparedStatement statement = connection.prepareStatement(SqlConstants.SQL_INSERT);
-        prepareStatement(statement, node);
-        statement.execute();
+        //Connection connection = getConnection();
+        //PreparedStatement statement = connection.prepareStatement(SqlConstants.SQL_INSERT);
+        prepareStatement(INSERT_STATEMENT, node);
+        INSERT_STATEMENT.execute();
     }
 
     @Override
     public void batchInsertNodes(List<NodeDb> nodes) throws SQLException {
-        Connection connection = getConnection();
-        PreparedStatement statement = connection.prepareStatement(SqlConstants.SQL_INSERT);
+        //Connection connection = getConnection();
+        //PreparedStatement statement = connection.prepareStatement(SqlConstants.SQL_INSERT);
         for (NodeDb node : nodes) {
-            prepareStatement(statement, node);
-            statement.addBatch();
+            prepareStatement(INSERT_STATEMENT, node);
+            INSERT_STATEMENT.addBatch();
         }
-        statement.executeBatch();
+        INSERT_STATEMENT.executeBatch();
     }
 
     private static class SqlConstants {

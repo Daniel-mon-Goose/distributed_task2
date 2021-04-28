@@ -25,6 +25,7 @@ public class DbUtils {
         try (Reader reader = new BufferedReader(new FileReader(file))) {
             int count = reader.read(SQL);
             connection = DriverManager.getConnection(DATABASE_URL, DATABASE_USERNAME, DATABASE_PASSWORD);
+            connection.setAutoCommit(false);
             Statement statement = connection.createStatement();
             String sql = new String(SQL, 0, count);
             statement.execute(sql);
